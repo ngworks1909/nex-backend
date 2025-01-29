@@ -1,0 +1,58 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  userId   String  @id @default(cuid())
+  username String
+  mobile   String  @unique
+  otp      String
+  wallet   Wallet?
+}
+
+model Wallet {
+  walletId String @id @default(cuid())
+  userId   String @unique
+  user     User   @relation(fields: [userId], references: [userId])
+  balance  Float  @default(0)
+}
+
+model Banner{
+  bannerId String @id @default(cuid())
+  bannerName String
+  bannerUrl String
+  createdAt DateTime @default(now())
+}
+
+model Game{
+  gameId String @id @default(cuid())
+  gameName GameName
+  entryFee Float
+  winAmount Float
+  maxPlayers Int
+  isActive Boolean @default(true)
+}
+
+enum GameName {
+  LUDO
+  CRICKET
+  MINES
+  CHESS
+  DICE
+}
+
+
+
+
+

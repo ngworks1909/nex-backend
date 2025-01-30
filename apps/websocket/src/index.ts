@@ -15,7 +15,7 @@ app.use(express.static("public"))
 app.use(cors())
 
 
-const httpServer = app.listen(`${process.env.PORT ?? 8080}`);
+const httpServer = app.listen(process.env.PORT ?? 8080);
 const wss = new WebSocketServer({server: httpServer});
 
 wss.on('connection', (ws, req) => {

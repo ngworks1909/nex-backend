@@ -15,10 +15,13 @@ app.use(express.static("public"))
 app.use(cors())
 
 
-const httpServer = app.listen(`${process.env.PORT ?? 8080}{}`);
+const httpServer = app.listen(`${process.env.PORT ?? 8080}`);
 const wss = new WebSocketServer({server: httpServer});
 
 wss.on('connection', (ws, req) => {
+    ws.on('message', (data) => {
+        console.log(data)
+    })
     // const parsedUrl = url.parse(req.url || '', true);
     // const data = parsedUrl.query.session ?? "";
     // const session =  Array.isArray(data) ? data[0] : data;

@@ -1,1 +1,0 @@
-export const init_game = "INIT_GAME";

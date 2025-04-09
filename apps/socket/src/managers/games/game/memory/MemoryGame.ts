@@ -99,7 +99,9 @@ export class MemoryGame {
     }
 
     public pickCard(playerId: string, cardIndex: number){
-        if(!this.isValidTurn(playerId)) return
+        if(!this.isValidTurn(playerId)) {
+            return;
+        }
         if(cardIndex < 0 || cardIndex > 21) return
         if(this.cards[cardIndex].isFlipped || this.cards[cardIndex].isMatched) return
         this.cards[cardIndex].isFlipped = true;
@@ -122,7 +124,7 @@ export class MemoryGame {
             const end = ( player1Score + player2Score ) === 11
             const message = JSON.stringify({card1Index, card2Index: cardIndex, player1Score, player2Score, end});
             socketManager.broadcastToRoom(this.roomId, match_memory_card, message);
-            this.endGame()
+            if(end) this.endGame();
             return;
         }
 
@@ -154,5 +156,4 @@ export class MemoryGame {
             }
         })
     }
-
 }

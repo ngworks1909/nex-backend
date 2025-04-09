@@ -130,7 +130,10 @@ class UserManager {
             };
             const message = JSON.parse(data);
             const isValidIndex = memoryIndexValidator.safeParse(message);
-            if(!isValidIndex.success) return;
+            if(!isValidIndex.success) {
+                console.log(isValidIndex.data);
+                return;
+            };
             const {cardId} = isValidIndex.data;
             gameManager.fetchMemoryGameAndPickCard(roomId, user.socket.id, cardId)
         })

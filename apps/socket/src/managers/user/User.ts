@@ -1,5 +1,4 @@
 import { Socket } from "socket.io";
-import { WebSocket } from "ws";
 
 export class User {
     private _userId: string; // Renamed to _userId
@@ -23,5 +22,13 @@ export class User {
 
     public get username(){
         return this._username
+    }
+
+    public get isActive(){
+        return this._isActive
+    }
+
+    public set isActive(isActive: boolean){
+        this._isActive = isActive
     }
 }

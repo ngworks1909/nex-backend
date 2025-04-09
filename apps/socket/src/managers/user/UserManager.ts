@@ -1,9 +1,12 @@
 import { User } from "./User";
-import { game_not_found, init_game, insufficient_balance, load_loader, wallet_not_found } from "../../messages/message";
-import { initGameValidator } from "../../zod/GameValidator";
+import { claim_mines, game_not_found, init_game, insufficient_balance, load_loader, pick_memory_card, select_mine, wallet_not_found } from "../../messages/message";
+import { GameType, initGameValidator } from "../../zod/GameValidator";
 import { roomManager } from "../room/RoomManager";
 import { prisma } from "../../db/client";
 import { appManager } from "../main/AppManager";
+import { mineIndexValidator } from "../../zod/MinesValidator";
+import { gameManager } from "../games/GameManager";
+import { memoryIndexValidator } from "../../zod/MemoryValidator";
 
 class UserManager {
     private static instance: UserManager
@@ -21,7 +24,9 @@ class UserManager {
 
     addUser(user: User) {
         this.onlineUsers.set(user.userId, user);
-        this.addLudoListener(user);
+        this.addGameListener(user);
+        this.addMinesListener(user);
+        this.addMemoryListener(user);
     }
 
     removeUser(userId: string) {
@@ -36,14 +41,25 @@ class UserManager {
         return this.onlineUsers.get(userId)
     }
 
-    private addLudoListener(user: User){
+    private addGameListener(user: User){
         const ws = user.socket
         ws.on(init_game, async(data: string) => {
             if(!data) return;
             const isValidInit = initGameValidator.safeParse(data);
-            console.log(isValidInit.success)
-            if(!isValidInit.success) return;
+            if(!isValidInit.success) {
+                return;
+            };
             const gameId = isValidInit.data;
+            //fetch game details
+            const game = await prisma.game.findUnique({
+                where:{
+                    gameId
+                }
+            });
+            if(!game){
+                ws.emit(game_not_found)
+                return
+            }
             //fetch user wallet
             const wallet = await prisma.wallet.findUnique({
                 where: {
@@ -58,16 +74,7 @@ class UserManager {
                 ws.emit(wallet_not_found)
                 return
             }
-            //fetch game entry fee
-            const game = await prisma.game.findUnique({
-                where:{
-                    gameId
-                }
-            });
-            if(!game){
-                ws.emit(game_not_found)
-                return
-            }
+
             if(wallet.balance < game.entryFee){
                 ws.emit(insufficient_balance)
                 return
@@ -83,8 +90,49 @@ class UserManager {
                     }
                 }
             })
-            ws.emit(load_loader, game.gameName);
+            const message = JSON.stringify({players: game.maxPlayers.toString(), gameName: game.gameName});
+            console.log("Sending to load");
+            ws.emit(load_loader, message);
             roomManager.createOrJoinRoom(user, gameId, game.gameName, game.maxPlayers, game.entryFee)
+        })
+    }
+
+    private addMinesListener(user: User){
+        user.socket.on(select_mine, (data: string) => {
+            const roomId = appManager.userToRoomMapping.get(user.userId);
+            if(!roomId) {
+                return;
+            };
+            const message = JSON.parse(data);
+            const isValidIndex = mineIndexValidator.safeParse(message);
+            if(!isValidIndex.success) {
+                return;
+            };
+            const {cardIndex} = isValidIndex.data;
+            gameManager.fetchMinesGameAndPickCard(roomId, cardIndex)
+        })
+
+        user.socket.on(claim_mines, () => {
+            const roomId = appManager.userToRoomMapping.get(user.userId);
+            if(!roomId) {
+                return;
+            };
+            gameManager.fetchMinesGameAndClaim(roomId)
+        })
+    }
+
+
+    private addMemoryListener(user: User){
+        user.socket.on(pick_memory_card, (data: string) => {
+            const roomId = appManager.userToRoomMapping.get(user.userId);
+            if(!roomId) {
+                return;
+            };
+            const message = JSON.parse(data);
+            const isValidIndex = memoryIndexValidator.safeParse(message);
+            if(!isValidIndex.success) return;
+            const {cardId} = isValidIndex.data;
+            gameManager.fetchMemoryGameAndPickCard(roomId, user.socket.id, cardId)
         })
     }
 

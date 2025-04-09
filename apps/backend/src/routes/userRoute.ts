@@ -2,7 +2,6 @@ import { Router } from "express";
 import { loginValidator, otpValidator, signupValidator } from "../zod/UserValidator";
 import { prisma } from "../db/client";
 import jwt from 'jsonwebtoken'
-import { UserRequest, verifySession } from "../middleware/verifySession";
 
 const router = Router();
 
@@ -34,13 +33,6 @@ router.post("/signup", async (req, res) => {
             })
         }
         const otp = generateOtp().toString();
-        // await prisma.user.create({
-        //     data: {
-        //         username,
-        //         mobile,
-        //         otp
-        //     }
-        // })
         await prisma.$transaction(async(tx) => {
             const user = await tx.user.create({
                 data: {

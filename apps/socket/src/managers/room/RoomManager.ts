@@ -55,14 +55,31 @@ class RoomManager implements IRoomManager  {
         //if join failed return false
         if(!joinStatus) return false;
         //check if the max players reached
-        if(pendingRoom.players.length === pendingRoom.maxPlayers){
-            //make game to in progress
-            pendingRoom.gameStatus = "IN_PROGRESS";
-            //remove the gameId with pendind roomId
-            appManager.pendingRooms.delete(gameId)
-            //create a game object
-            gameManager.createGame(pendingRoom.roomId, pendingRoom.gameType)
-            
+        const players = pendingRoom.players
+        if(players.length === pendingRoom.maxPlayers){
+            //create a room in db and connect the players
+            try {
+                prisma.room.create({
+                    data: {
+                        roomId,
+                        gameId,
+                        players: {
+                            connect: players.map(player => ({ userId: player.userId }))
+                        }
+                    }
+                }).then(() => {
+                    //make game to in progress
+                    pendingRoom.gameStatus = "IN_PROGRESS";
+                    //remove the gameId with pendind roomId
+                    appManager.pendingRooms.delete(gameId)
+                    //create a game object
+                    gameManager.createGame(pendingRoom.roomId, pendingRoom.gameType)
+                    appManager.userToRoomMapping.set(user.userId, roomId);
+                    return true;
+                })
+            } catch (error) {
+                return false;
+            } 
         }
         //set the user playing in the room
         appManager.userToRoomMapping.set(user.userId, roomId);
@@ -78,6 +95,29 @@ class RoomManager implements IRoomManager  {
         const room = new Room(roomId, user, gameName, maxPlayers, entryFee);
         //set the new room
         appManager.rooms.set(roomId, room);
+        //set the user playing in the room
+        appManager.userToRoomMapping.set(user.userId, roomId);
+        if(maxPlayers === 1){
+            room.gameStatus = "IN_PROGRESS";
+            //remove the gameId with pendind roomId
+            appManager.pendingRooms.delete(gameId)
+            //create a game object
+            prisma.room.create({
+                data: {
+                    roomId,
+                    gameId,
+                    players: {
+                        connect: [
+                            {userId: user.userId}
+                        ]
+                    }
+                }
+            }).then(() => {
+                gameManager.createGame(roomId, gameName)
+                return
+            })
+            
+        }
         //mark the room as pending room
         appManager.pendingRooms.set(gameId, roomId)
         //emiting event to user that room has created

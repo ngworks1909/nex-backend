@@ -1,7 +1,6 @@
 import express from "express"
 import userRouter from "./routes/userRoute"
-import homeRouter from './routes/homeRoute'
-import gameRouter from './routes/gameRoute'
+import dataRouter from './routes/dataRoute'
 import cors from 'cors'
 import dotenv from 'dotenv'
 
@@ -14,7 +13,6 @@ app.use(express.static("public"))
 app.use(cors())
 
 app.use("/api/auth", userRouter)
-app.use("/api/home", homeRouter)
-app.use("/api/game", gameRouter)
+app.use("/api/data", dataRouter)
 
 app.listen(3001)

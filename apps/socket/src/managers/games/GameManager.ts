@@ -1,12 +1,9 @@
 import { GameType } from "../../zod/GameValidator";
-import { Room } from "../room/Room";
-import { ChessGame } from "./game/chess/ChessGame";
-import { CricketGame } from "./game/cricket/CricketGame";
-import { DiceGame } from "./game/dice/DiceGame";
 import { LudoGame } from "./game/ludo/LudoGame";
+import { MemoryGame } from "./game/memory/MemoryGame";
 import { MineGame } from "./game/mines/MineGame";
 
-type Game = ChessGame | CricketGame | DiceGame | LudoGame | MineGame
+type Game = LudoGame | MineGame | MemoryGame
 
 class GameManager {
     private static instance: GameManager;
@@ -22,24 +19,43 @@ class GameManager {
     }
     public createGame(roomId: string, gameType: GameType){
         switch(gameType){
-            case "CHESS":
-                this.games.set(roomId, new ChessGame(roomId))
-                break;
-            case "CRICKET":
-                this.games.set(roomId, new CricketGame(roomId))
-                break;
-            case "DICE":
-                this.games.set(roomId, new DiceGame(roomId))
-                break;
             case "LUDO":
                 this.games.set(roomId, new LudoGame(roomId))
                 break;
             case "MINES":
                 this.games.set(roomId, new MineGame(roomId))
                 break;
+            case "MEMORY":
+                this.games.set(roomId, new MemoryGame(roomId))
+                break;
             default:
                 break;
         }
+    }
+
+    public fetchMinesGameAndPickCard(roomId: string, cardIndex: number){
+        const game = this.games.get(roomId);
+        if(!game) return;
+        if(!(game instanceof MineGame)) return
+        if(game.gameOver) return;
+        game.pickCard(cardIndex)
+    }
+
+    public fetchMinesGameAndClaim(roomId: string){
+        const game = this.games.get(roomId);
+        if(!game) return;
+        if(!(game instanceof MineGame)) return
+        if(game.gameOver) return;
+        game.claimAmount()
+    }
+
+
+    public fetchMemoryGameAndPickCard(roomId: string, playerId: string, cardIndex: number){
+        const game = this.games.get(roomId);
+        if(!game) return;
+        if(!(game instanceof MemoryGame)) return
+        if(game.gameOver) return;
+        game.pickCard(playerId, cardIndex)
     }
 
     

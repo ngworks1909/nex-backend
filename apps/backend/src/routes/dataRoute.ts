@@ -20,12 +20,20 @@ router.get("/fetchdata", verifySession, async(req: UserRequest, res) => {
         if(!wallet){
             return res.status(400).json({success: false, message: "Wallet not found"})
         }
-        const banners = await prisma.banner.findMany({
-            take: 4
+
+        const games = await prisma.game.findMany({
+            where: {
+                isActive: true
+            },
+            select: {
+                gameId: true,
+                gameName: true,
+                entryFee: true,
+                winAmount: true,
+                maxPlayers: true
+            }
         });
-
-
-        return res.status(200).json({success: true, wallet, banners})
+        return res.status(200).json({success: true, wallet, games})
 
     } catch (error) {
         return res.status(500).json({success: false, message: "Internal server error"})

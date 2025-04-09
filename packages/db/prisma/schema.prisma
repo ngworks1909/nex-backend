@@ -19,6 +19,8 @@ model User {
   mobile   String  @unique
   otp      String
   wallet   Wallet?
+  rooms    Room[] @relation("Matches")
+  winnings Room[] @relation("Winnings")
 }
 
 model Wallet {
@@ -42,14 +44,22 @@ model Game{
   winAmount Float
   maxPlayers Int
   isActive Boolean @default(true)
+  rooms Room[]
+}
+
+model Room {
+  roomId String @id
+  gameId String
+  game Game @relation(fields: [gameId], references: [gameId])
+  players User[] @relation("Matches")
+  winnerId String?
+  winner User?  @relation("Winnings", fields: [winnerId], references: [userId])
 }
 
 enum GameName {
   LUDO
-  CRICKET
   MINES
-  CHESS
-  DICE
+  MEMORY
 }
 
 

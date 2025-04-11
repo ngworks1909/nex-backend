@@ -1,5 +1,5 @@
 import { User } from "./User";
-import { claim_mines, game_not_found, init_game, insufficient_balance, load_loader, pick_memory_card, select_mine, wallet_not_found } from "../../messages/message";
+import { claim_mines, game_not_found, init_game, insufficient_balance, load_loader, ludo_roll_dice, pick_memory_card, select_mine, wallet_not_found } from "../../messages/message";
 import { GameType, initGameValidator } from "../../zod/GameValidator";
 import { roomManager } from "../room/RoomManager";
 import { prisma } from "../../db/client";
@@ -27,6 +27,7 @@ class UserManager {
         this.addGameListener(user);
         this.addMinesListener(user);
         this.addMemoryListener(user);
+        this.addLudoListener(user)
     }
 
     removeUser(userId: string) {
@@ -91,7 +92,6 @@ class UserManager {
                 }
             })
             const message = JSON.stringify({players: game.maxPlayers.toString(), gameName: game.gameName});
-            console.log("Sending to load");
             ws.emit(load_loader, message);
             roomManager.createOrJoinRoom(user, gameId, game.gameName, game.maxPlayers, game.entryFee)
         })
@@ -136,6 +136,16 @@ class UserManager {
             };
             const {cardId} = isValidIndex.data;
             gameManager.fetchMemoryGameAndPickCard(roomId, user.socket.id, cardId)
+        })
+    }
+
+    private addLudoListener(user: User){
+        user.socket.on(ludo_roll_dice, () => {
+            const roomId = appManager.userToRoomMapping.get(user.userId);
+            if(!roomId) {
+                return;
+            };
+            gameManager.fetchLudoGameAndRollDice(roomId, user.socket.id)
         })
     }
 

@@ -24,6 +24,10 @@ io.on('connection', (socket) => {
     if(user){
         userManager.addUser(user)
     }
+    socket.on('ADD_USER', (data: string) => {
+        const user = extractJwtToken(data, socket);
+        if(user) userManager.addUser(user)
+    })
     socket.on('disconnect', () => {
         console.log("disconnected")
     });

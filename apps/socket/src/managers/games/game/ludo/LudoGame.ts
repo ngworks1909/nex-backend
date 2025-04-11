@@ -64,6 +64,7 @@ export class LudoGame {
     private diceManager: Dice = new Dice();
     private currentPositions: Position[] = [];
     private isBlocked: boolean = true;
+    private _gameOver: boolean = false
     constructor(roomId: string){
         this._roomId = roomId;
         const room = appManager.rooms.get(roomId);
@@ -74,7 +75,7 @@ export class LudoGame {
             players.forEach(player => {
                 data.push({socketId: player.socket.id, username: player.username})
             })
-            this.currentPlayer = data[1].socketId as string
+            this.currentPlayer = data[0].socketId as string
             const message = JSON.stringify({players: data, currentPlayer: this.currentPlayer})
             socketManager.broadcastToRoom(roomId, start_ludo_game , message)
         })
@@ -133,6 +134,11 @@ export class LudoGame {
     }
 
 
+    public get gameOver(){
+        return this._gameOver
+    }
+
+
     private isValidTurn(playerId: string){
         return this.currentPlayer === playerId
     }
@@ -146,6 +152,7 @@ export class LudoGame {
 
     public rollDice(playerId: string){
         if(!this.isValidTurn(playerId)) return;
+        if(this.diceManager.isDiceRolled) return;
         this.diceManager.rollDice().then(() => {
             const diceValue = this.diceManager.diceValue
             const message = JSON.stringify({diceValue})
@@ -195,7 +202,7 @@ export class LudoGame {
         });
     }
 
-    public getMapper(id: string){
+    private getMapper(id: string){
         const start = id[0]
         switch(start){
             case "A":

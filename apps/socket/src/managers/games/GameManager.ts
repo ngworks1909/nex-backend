@@ -58,6 +58,15 @@ class GameManager {
         game.pickCard(playerId, cardIndex)
     }
 
+
+    public fetchLudoGameAndRollDice(roomId: string, playerId: string){
+        const game = this.games.get(roomId);
+        if(!game) return;
+        if(!(game instanceof LudoGame)) return
+        if(game.gameOver) return;
+        game.rollDice(playerId)
+    }
+
     
 
 

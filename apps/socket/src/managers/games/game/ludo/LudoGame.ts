@@ -35,9 +35,13 @@ class Dice{
         this._isDiceRolled = status
     }
 
+    public get isDiceRolled(){
+        return this._isDiceRolled
+    }
+
     public async rollDice(){
         if(this._isDiceRolled) return;
-        this._diceValue = Math.floor(Math.random() * 6) + 1;
+        this._diceValue = 6;
         this._isDiceRolled = true;
     }
 

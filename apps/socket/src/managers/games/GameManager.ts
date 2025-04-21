@@ -72,6 +72,7 @@ class GameManager {
         if(!game) return;
         if(!(game instanceof LudoGame)) return
         if(game.gameOver) return;
+        game.movePiece(playerId, pieceId)
     }
 
     

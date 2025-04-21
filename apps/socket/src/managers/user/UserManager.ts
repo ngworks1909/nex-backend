@@ -1,5 +1,5 @@
 import { User } from "./User";
-import { claim_mines, game_not_found, init_game, insufficient_balance, load_loader, ludo_roll_dice, pick_memory_card, select_mine, wallet_not_found } from "../../messages/message";
+import { claim_mines, game_not_found, init_game, insufficient_balance, load_loader, ludo_move_piece, ludo_roll_dice, pick_memory_card, select_mine, wallet_not_found } from "../../messages/message";
 import { GameType, initGameValidator } from "../../zod/GameValidator";
 import { roomManager } from "../room/RoomManager";
 import { prisma } from "../../db/client";
@@ -146,6 +146,14 @@ class UserManager {
                 return;
             };
             gameManager.fetchLudoGameAndRollDice(roomId, user.socket.id)
+        })
+
+        user.socket.on(ludo_move_piece, (pieceId: string) => {
+            const roomId = appManager.userToRoomMapping.get(user.userId);
+            if(!roomId) {
+                return;
+            };
+            gameManager.fetchLudoGameAndMovePiece(roomId, user.socket.id, pieceId)
         })
     }
 

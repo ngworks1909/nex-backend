@@ -67,6 +67,13 @@ class GameManager {
         game.rollDice(playerId)
     }
 
+    public fetchLudoGameAndMovePiece(roomId: string, playerId: string, pieceId: string){
+        const game = this.games.get(roomId);
+        if(!game) return;
+        if(!(game instanceof LudoGame)) return
+        if(game.gameOver) return;
+    }
+
     
 
 

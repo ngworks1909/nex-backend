@@ -1,5 +1,5 @@
 import { Player } from "../../../../interfaces/GameInterface";
-import { ludo_enable_pile_selection, ludo_dice_rolled, start_ludo_game, ludo_update_turn, ludo_enable_cell_selection, ludo_update_move, ludo_kill_piece } from "../../../../messages/message";
+import { ludo_enable_pile_selection, ludo_dice_rolled, start_ludo_game, ludo_update_turn, ludo_enable_cell_selection, ludo_update_move, ludo_kill_piece, ludo_player_home, ludo_player_win } from "../../../../messages/message";
 import { appManager } from "../../../main/AppManager";
 import { socketManager } from "../../../socketmanager/SocketManager";
 import { User } from "../../../user/User";
@@ -64,7 +64,7 @@ export class LudoGame {
     private diceManager: Dice = new Dice();
     private currentPositions: Position[] = [];
     private isBlocked: boolean = true;
-    private _gameOver: boolean = false
+    private _gameOver: boolean = false;
     constructor(roomId: string){
         this._roomId = roomId;
         const room = appManager.rooms.get(roomId);
@@ -150,6 +150,18 @@ export class LudoGame {
         this.diceManager.isDiceRolled = false
     }
 
+    private getPlayerIndex(playerId: string){
+        return this.players.findIndex(player => player.socketId === playerId);
+    }
+
+    private getPlayerPiecesByPlayerId(playerId: string){
+        return (this.players.find(player => player.socketId === playerId)as PlayerState).pieces
+    }
+
+    private getPlayerPiecesByIndex(index: number){
+        return this.players[index].pieces
+    }
+
     public rollDice(playerId: string){
         if(!this.isValidTurn(playerId)) return;
         if(this.diceManager.isDiceRolled) return;
@@ -157,9 +169,10 @@ export class LudoGame {
             const diceValue = this.diceManager.diceValue
             const message = JSON.stringify({diceValue})
             socketManager.broadcastToRoom(this._roomId, ludo_dice_rolled, message);
+            this.isBlocked = false
 
-            const playerIndex = this.players.findIndex(player => player.socketId === playerId);
-            const playerPieces = this.players[playerIndex].pieces;
+            const playerIndex = this.getPlayerIndex(playerId)
+            const playerPieces = this.getPlayerPiecesByIndex(playerIndex);
             const isAnyPieceAlive = playerPieces.findIndex(piece => piece.pos !== 0 && piece.pos !== 57)
             const isAnyPieceLocked = playerPieces.findIndex(piece => piece.pos === 0);
 
@@ -218,32 +231,31 @@ export class LudoGame {
         }
     }
 
+
     public movePiece(playerId: string, pieceId: string){
         if(!this.isValidTurn(playerId)) return;
         if(!this.diceManager.isDiceRolled || this.isBlocked) return
         this.isBlocked = true;
         const diceValue = this.diceManager.diceValue
-        const playerIndex = this.players.findIndex(player => player.socketId === playerId);
-        if(playerIndex === -1) return
-        const playerPieces = this.players[playerIndex].pieces;
+        const playerIndex = this.getPlayerIndex(playerId)
+        const playerPieces = this.getPlayerPiecesByPlayerId(playerId);
         const pieceIndex = playerPieces.findIndex(piece => piece.id === pieceId);
-        if(pieceIndex === -1) return;
         const piece = playerPieces[pieceIndex];
-        if(!piece) return;
         if(piece.pos === 0){
             if(diceValue !== 6) return
             const startPosition = startingPoints[playerIndex]
             this.players[playerIndex].pieces[pieceIndex].pos = startPosition;
             this.players[playerIndex].pieces[pieceIndex].travelCount = 1;
             this.currentPositions.push({id: piece.id, pos: startPosition});
-            const message = JSON.stringify({pieceId: piece.id, pos: startPosition, travelCount: 1})
-            socketManager.broadcastToRoom(this._roomId, ludo_update_move, message)
+            const message = JSON.stringify({pieceId: piece.id, pos: startPosition, travelCount: 1, playerId})
+            socketManager.broadcastToRoom(this._roomId, ludo_update_move, message);
+            this.diceManager.isDiceRolled = false
             return
         }
+
         let currentPos = piece.pos;
         let travelCount = piece.travelCount;
         if(travelCount + diceValue > 57) return
-
         for(let i = 0; i < diceValue; i++){
             currentPos += 1;
             if (turningPoints.includes(currentPos) && turningPoints[playerIndex] === currentPos) {
@@ -263,13 +275,24 @@ export class LudoGame {
             this.currentPositions[positionIndex] = {id: piece.id, pos: currentPos};
         }
         this.players[playerIndex].pieces[pieceIndex].pos = currentPos;
-            this.players[playerIndex].pieces[pieceIndex].travelCount = travelCount;
-        socketManager.broadcastToRoom(this._roomId, ludo_update_move, JSON.stringify({pieceId: piece.id, pos: currentPos, travelCount: travelCount}))
+        this.players[playerIndex].pieces[pieceIndex].travelCount = travelCount;
+        this.updateMove(playerId, currentPos, travelCount, pieceId)
+        // socketManager.broadcastToRoom(this._roomId, ludo_update_move, JSON.stringify({pieceId: piece.id, pos: currentPos, travelCount: travelCount}))
+    }
 
-        const collidingPieces = this.currentPositions.filter(position => position.pos === currentPos);
+    private checkWin(pieces: Piece[]){
+        return pieces.every(piece => piece.travelCount === 57)
+    }
+    
+
+    private updateMove(playerId: string, currentPos: number, travelCount: number, pieceId: string){
+        if(!this.diceManager.isDiceRolled || !this.isBlocked) return
+        const updatedPositions = this.currentPositions;
+        const collidingPieces = updatedPositions.filter(item => item.pos === currentPos);
         const ids = collidingPieces.map(item => item.id[0]);
         const uniqueIds = new Set(ids);
         const areDifferentIds = uniqueIds.size > 1;
+
         if (areDifferentIds && !SafeSpots.includes(collidingPieces[0].pos) && !StarSpots.includes(collidingPieces[0].pos)) {
             const enemyPiece = collidingPieces.find(piece => piece.id[0] !== pieceId[0]) as Position;
             const enemyId = enemyPiece.id;
@@ -279,9 +302,40 @@ export class LudoGame {
             const enemyPieceIndex = this.players[enemyIndex].pieces.findIndex(piece => piece.id === enemyId);
             this.players[enemyIndex].pieces[enemyPieceIndex].pos = 0;
             this.players[enemyIndex].pieces[enemyPieceIndex].travelCount = 0;
-            const message = JSON.stringify({pieceId: enemyId, pos: 0, travelCount: 0});
-            socketManager.broadcastToRoom(this._roomId, ludo_kill_piece, message)
+            const message = JSON.stringify({
+                player: {
+                    playerId,
+                    pieceId,
+                    pos: currentPos,
+                    travelCount
+                },
+                kill: {
+                    pieceId: enemyId,
+                }
+            })
+            socketManager.broadcastToRoom(this._roomId, ludo_kill_piece, message);
+            this.diceManager.isDiceRolled = false
+            return;
         }
+
+        socketManager.broadcastToRoom(this._roomId, ludo_update_move, JSON.stringify({pieceId, pos: currentPos, travelCount: travelCount, playerId}));
+        this.diceManager.isDiceRolled = false
+        if(this.diceManager.diceValue === 6 || travelCount === 57){
+            const message = JSON.stringify({currentPlayer: this.currentPlayer,})
+            socketManager.broadcastToRoom(this._roomId, ludo_update_turn, message)
+            if(travelCount === 57){
+                socketManager.broadcastToRoom(this._roomId, ludo_player_home);
+                const playerPieces = this.getPlayerPiecesByPlayerId(playerId);
+                if(this.checkWin(playerPieces)){
+                    socketManager.broadcastToRoom(this._roomId, ludo_player_win, JSON.stringify({playerId}));
+                }
+            }
+            return;
+        }
+
+        this.updateTurn();
+        socketManager.broadcastToRoom(this._roomId, ludo_update_turn, JSON.stringify({currentPlayer: this.currentPlayer}));
+
     }
 
 

@@ -33,3 +33,5 @@ export const ludo_enable_cell_selection = "LUDO_ENABLE_CELL_SELECTION";
 export const ludo_move_piece = "LUDO_MOVE_PIECE";
 export const ludo_update_move = "LUDO_UPDATE_MOVE";
 export const ludo_kill_piece = "LUDO_KILL_PIECE"
+export const ludo_player_home = "LUDO_PLAYER_HOME"
+export const ludo_player_win = "LUDO_PLAYER_WIN"

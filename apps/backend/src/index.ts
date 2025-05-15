@@ -1,6 +1,7 @@
 import express from "express"
 import userRouter from "./routes/userRoute"
 import dataRouter from './routes/dataRoute'
+import paymentRouter from './routes/paymentRoute'
 import cors from 'cors'
 import dotenv from 'dotenv'
 
@@ -14,5 +15,6 @@ app.use(cors())
 
 app.use("/api/auth", userRouter)
 app.use("/api/data", dataRouter)
+app.use("/api/payment", paymentRouter)
 
 app.listen(3001)

@@ -21,6 +21,7 @@ model User {
   wallet   Wallet?
   rooms    Room[] @relation("Matches")
   winnings Room[] @relation("Winnings")
+  payments Payment[]
 }
 
 model Wallet {
@@ -45,6 +46,20 @@ model Game{
   maxPlayers Int
   isActive Boolean @default(true)
   rooms Room[]
+}
+
+model Payment {
+  paymentId String @id
+  userId String
+  user User @relation(fields: [userId], references: [userId])
+  amount Float
+  paymentStatus PaymentStatus @default(Pending)
+}
+
+enum PaymentStatus {
+  Pending
+  Success
+  Failed
 }
 
 model Room {

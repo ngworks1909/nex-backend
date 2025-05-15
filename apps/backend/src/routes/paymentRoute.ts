@@ -3,6 +3,7 @@ import dotenv from 'dotenv'
 import razorpay from 'razorpay'
 import { UserRequest, verifySession } from "../middleware/verifySession";
 import { createPaymentSchema } from "../zod/PaymentValidator";
+import { prisma } from "../db/client";
 
 dotenv.config()
 
@@ -18,7 +19,7 @@ const key = process.env.RAZORPAY_KEY
 const secret = process.env.RAZORPAY_SECRET
 
 
-router.get('/create', verifySession,async(req: UserRequest, res) => {
+router.post('/create', verifySession,async(req: UserRequest, res) => {
     try {
         const userId = req.userId!
         const isValidCreate = createPaymentSchema.safeParse(req.body);
@@ -37,6 +38,14 @@ router.get('/create', verifySession,async(req: UserRequest, res) => {
         }
 
         const order = await rz.orders.create(options);
+
+        await prisma.payment.create({
+            data: {
+                paymentId: order.id,
+                userId,
+                amount
+            }
+        })
         res.status(200).json({success: true, message: "Order created", data: order})
 
     } catch (error) {

@@ -4,7 +4,6 @@ import razorpay from 'razorpay'
 import { UserRequest, verifySession } from "../middleware/verifySession";
 import { createPaymentSchema, verifyPaymentSchema } from "../zod/PaymentValidator";
 import { prisma } from "../db/client";
-import crypto from 'crypto'
 import { verifySignature } from "../actions/verifySignature";
 
 dotenv.config()
@@ -12,14 +11,13 @@ dotenv.config()
 
 const router = Router();
 
-const razr_key = process.env.RAZORPAY_KEY!
-const razr_secret = process.env.RAZORPAY_SECRET!
+const razr_key = process.env.RAZORPAY_KEY
+const razr_secret = process.env.RAZORPAY_SECRET
 
 const rz = new razorpay({
     key_id: razr_key,
     key_secret: razr_secret
 })
-
 
 
 
@@ -124,10 +122,6 @@ router.post('/create', verifySession,async(req: UserRequest, res) => {
     } catch (error) {
         return res.status(500).json({success: false, message: "Internal server error", error})
     }
-    
-  
-    
-
 });
 
 export default router

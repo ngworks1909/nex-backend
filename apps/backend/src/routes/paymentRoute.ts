@@ -46,12 +46,12 @@ router.post('/create', verifySession,async(req: UserRequest, res) => {
             data: {
                 paymentId: order.id,
                 userId,
-                amount
+                amount,
+                paymentType: "DEPOSIT"
             }
         })
 
-        const data = {orderId: order.id, amount: order.amount, currency: order.currency}
-        res.status(200).json({success: true, message: "Order created", data})
+        res.status(200).json({success: true, message: "Order created", orderId: order.id, amount: order.amount, currency: order.currency})
 
     } catch (error) {
         return res.status(500).json({success: false, message: "Internal server error"})
@@ -59,38 +59,43 @@ router.post('/create', verifySession,async(req: UserRequest, res) => {
 })
 
 
-  router.post('/verify', async (req, res) => {
+  router.post('/verify', verifySession, async (req: UserRequest, res) => {
 
     try {
         const isValidUpdate = verifyPaymentSchema.safeParse(req.body);
         if (!isValidUpdate.success) {
             return res.status(400).json({ message: isValidUpdate.error.message });
         }
-        const { razorpay_order_id, razorpay_payment_id, razorpay_signature, status } = isValidUpdate.data;
-        if (status === 'failed') {
-            await prisma.payment.update({
-                where: { paymentId: razorpay_order_id },
-                data: {
-                  paymentStatus: "Failed", // Mark transaction as failed
-                },
-            });
-            return res.status(200).json({ message: 'Transaction failed' });
-        }
+        const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = isValidUpdate.data;
 
         const isValid = verifySignature(razorpay_order_id, razorpay_payment_id, razorpay_signature);
     
-        if (!isValid) {
-          return res.status(400).json({ message: 'Invalid signature. Payment verification failed' });
-        }
+
 
         const response = await prisma.$transaction(async(tx) => {
-            const transaction = await tx.payment.update({
+
+            const transaction = await tx.payment.findUnique({
               where: { paymentId: razorpay_order_id },
-              data: {
-                paymentStatus: "Success",
-              },
+              select: { userId: true, amount: true }
             });
             
+            if (!transaction) {
+              return res.status(400).json({ message: 'Transaction not found' });
+            }
+
+            if(transaction.userId !== req.userId){
+                return res.status(400).json({success: false, message: "Unauthorized Payment"})
+            }
+
+            await tx.payment.update({
+              where: { paymentId: razorpay_order_id },
+              data: {
+                paymentStatus: isValid ? "Success" : "Failed",
+              },
+            });
+            if (!isValid) {
+                return res.status(400).json({ message: 'Invalid signature. Payment verification failed' });
+            }
             const user = await tx.user.findUnique({
               where: { userId: transaction.userId },
               select: {wallet: {select: {walletId: true}}}
@@ -123,5 +128,32 @@ router.post('/create', verifySession,async(req: UserRequest, res) => {
         return res.status(500).json({success: false, message: "Internal server error", error})
     }
 });
+
+
+
+
+router.get('/fetchpayments', verifySession, async(req: UserRequest, res) => {
+    try {
+        const userId = req.userId!;
+        const payments = await prisma.payment.findMany({
+            where: {
+                userId
+            },
+            orderBy: {
+                createdAt: 'desc'
+            },
+            select: {
+                paymentId: true,
+                amount: true,
+                paymentStatus: true,
+                createdAt: true,
+                paymentType: true
+            }
+        })
+        res.status(200).json({success: true, message: "Payments fetched", payments})
+    } catch (error) {
+        return res.status(500).json({success: false, message: "Internal server error"})
+    }
+})
 
 export default router

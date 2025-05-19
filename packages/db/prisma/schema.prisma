@@ -54,6 +54,13 @@ model Payment {
   user User @relation(fields: [userId], references: [userId])
   amount Float
   paymentStatus PaymentStatus @default(Pending)
+  paymentType PaymentType
+  createdAt DateTime @default(now())
+}
+
+enum PaymentType {
+  DEPOSIT
+  WITHDRAW
 }
 
 enum PaymentStatus {

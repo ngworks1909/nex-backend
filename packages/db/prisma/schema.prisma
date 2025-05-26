@@ -18,9 +18,13 @@ model User {
   username String
   mobile   String  @unique
   otp      String
+  createdAt DateTime @default(now())
   wallet   Wallet?
   rooms    Room[] @relation("Matches")
   winnings Room[] @relation("Winnings")
+  referralCode String? @unique
+  referredBy String?
+  verified Boolean @default(false)
   payments Payment[]
 }
 
@@ -74,6 +78,7 @@ model Room {
   gameId String
   game Game @relation(fields: [gameId], references: [gameId])
   players User[] @relation("Matches")
+  createdAt DateTime @default(now())
   winnerId String?
   winner User?  @relation("Winnings", fields: [winnerId], references: [userId])
 }

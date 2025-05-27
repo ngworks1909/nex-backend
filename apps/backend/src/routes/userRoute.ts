@@ -261,12 +261,12 @@ router.post("/verifyotp", async (req, res) => {
             }
         }
         const authToken = jwt.sign(data, `${process.env.JWT_SECRET ?? 'secret'}`, {expiresIn: '15d'});
-        const refershToken = jwt.sign(data, `${process.env.JWT_SECRET ?? 'secret'}`, {expiresIn: '20d'});
+        const refreshToken = jwt.sign(data, `${process.env.JWT_SECRET ?? 'secret'}`, {expiresIn: '20d'});
         return res.status(200).json({
             success: true,
             message: 'OTP verified.',
             authToken,
-            refershToken
+            refreshToken
         })
 
     } catch (error) {

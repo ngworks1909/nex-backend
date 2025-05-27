@@ -1,6 +1,6 @@
 import { prisma } from "../../../../db/client";
 import { Player } from "../../../../interfaces/GameInterface";
-import { match_memory_card, open_memory_card, start_memory_game, unmatch_memory_card } from "../../../../messages/message";
+import { end_memory_game, match_memory_card, open_memory_card, start_memory_game, unmatch_memory_card } from "../../../../messages/message";
 import { appManager } from "../../../main/AppManager";
 import { socketManager } from "../../../socketmanager/SocketManager";
 
@@ -146,14 +146,20 @@ export class MemoryGame {
         room.gameStatus = "FINISHED";
         this._gameOver = true;
         const players = room.players;
-        const winnerId = this.player1Score > this.player2Score ? players[0].userId: players[1].userId
+        const winner = this.player1Score > this.player2Score ? players[0]: players[1]
+        const winnerId = winner.userId
+        const winnerSocketId = winner.socket.id
         await prisma.room.update({
             where: {
                 roomId: this.roomId
             },
             data: {
-                winnerId
+                winnerId,
+                winAmount: room.winAmount
             }
-        })
+        });
+
+        const message = JSON.stringify({winnerId: winnerSocketId, winAmount: room.winAmount});
+        socketManager.broadcastToRoom(this.roomId, end_memory_game, message);
     }
 }

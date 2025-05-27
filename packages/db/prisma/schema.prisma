@@ -26,6 +26,8 @@ model User {
   referredBy String?
   verified Boolean @default(false)
   payments Payment[]
+
+  @@index([userId, mobile])
 }
 
 model Wallet {
@@ -33,6 +35,8 @@ model Wallet {
   userId   String @unique
   user     User   @relation(fields: [userId], references: [userId])
   balance  Float  @default(0)
+
+  @@index([walletId, userId])
 }
 
 model Banner{
@@ -50,6 +54,7 @@ model Game{
   maxPlayers Int
   isActive Boolean @default(true)
   rooms Room[]
+  @@index([gameId, gameName])
 }
 
 model Payment {
@@ -60,6 +65,8 @@ model Payment {
   paymentStatus PaymentStatus @default(Pending)
   paymentType PaymentType
   createdAt DateTime @default(now())
+
+  @@index([paymentId, userId])
 }
 
 enum PaymentType {
@@ -80,7 +87,9 @@ model Room {
   players User[] @relation("Matches")
   createdAt DateTime @default(now())
   winnerId String?
+  winAmount Float @default(0)
   winner User?  @relation("Winnings", fields: [winnerId], references: [userId])
+  @@index([roomId])
 }
 
 enum GameName {
@@ -88,6 +97,7 @@ enum GameName {
   MINES
   MEMORY
 }
+
 
 
 

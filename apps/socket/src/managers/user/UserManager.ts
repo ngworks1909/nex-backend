@@ -7,6 +7,8 @@ import { appManager } from "../main/AppManager";
 import { mineIndexValidator } from "../../zod/MinesValidator";
 import { gameManager } from "../games/GameManager";
 import { memoryIndexValidator } from "../../zod/MemoryValidator";
+import { decryptGameToken } from "../../actions/decryptGameToken";
+
 
 class UserManager {
     private static instance: UserManager
@@ -50,50 +52,25 @@ class UserManager {
             if(!isValidInit.success) {
                 return;
             };
-            const gameId = isValidInit.data;
-            //fetch game details
+            const seed = isValidInit.data
+            const gameId = decryptGameToken(seed);
             const game = await prisma.game.findUnique({
                 where:{
                     gameId
+                },select: {
+                    gameName: true,
+                    entryFee: true,
+                    maxPlayers: true,
+                    winAmount: true
                 }
             });
             if(!game){
                 ws.emit(game_not_found)
                 return
             }
-            //fetch user wallet
-            const wallet = await prisma.wallet.findUnique({
-                where: {
-                    userId: user.userId
-                },
-                select: {
-                    balance: true,
-                    walletId: true
-                }
-            })
-            if(!wallet){
-                ws.emit(wallet_not_found)
-                return
-            }
-
-            if(wallet.balance < game.entryFee){
-                ws.emit(insufficient_balance)
-                return
-            }
-
-            await prisma.wallet.update({
-                where: {
-                    walletId: wallet.walletId
-                },
-                data: {
-                    balance: {
-                        decrement: game.entryFee
-                    }
-                }
-            })
             const message = JSON.stringify({players: game.maxPlayers.toString(), gameName: game.gameName});
             ws.emit(load_loader, message);
-            roomManager.createOrJoinRoom(user, gameId, game.gameName, game.maxPlayers, game.entryFee)
+            roomManager.createOrJoinRoom(user, gameId, game.gameName, game.maxPlayers, game.entryFee, game.winAmount)
         })
     }
 

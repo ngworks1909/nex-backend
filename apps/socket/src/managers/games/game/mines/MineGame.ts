@@ -114,7 +114,8 @@ export class MineGame {
                     roomId: this._roomId
                 },
                 data: {
-                    winnerId: user.userId
+                    winnerId: user.userId,
+                    winAmount: wonAmount
                 }
             });
             await tx.wallet.update({

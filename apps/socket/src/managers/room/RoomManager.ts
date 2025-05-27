@@ -8,7 +8,7 @@ import { User } from "../user/User";
 import { createId } from "@paralleldrive/cuid2";
 
 interface IRoomManager {
-    createOrJoinRoom(user: User, gameId: string, gameName: GameType, maxPlayers: number, entryFee: number): void
+    createOrJoinRoom(user: User, gameId: string, gameName: GameType, maxPlayers: number, entryFee: number, winAmount: number): void
 }
 
 class RoomManager implements IRoomManager  {
@@ -87,12 +87,12 @@ class RoomManager implements IRoomManager  {
         return true;
     }
 
-    private createRoom(user: User, gameId: string, gameName: GameType, maxPlayers: number, entryFee: number){
+    private createRoom(user: User, gameId: string, gameName: GameType, maxPlayers: number, entryFee: number, winAmount: number){
         
         //create a new roomId 
         const roomId = createId();
         //create new room
-        const room = new Room(roomId, user, gameName, maxPlayers, entryFee);
+        const room = new Room(roomId, gameId, user, gameName, maxPlayers, entryFee, winAmount);
         //set the new room
         appManager.rooms.set(roomId, room);
         //set the user playing in the room
@@ -135,7 +135,7 @@ class RoomManager implements IRoomManager  {
     }
 
 
-    public createOrJoinRoom(user: User, gameId: string, gameName: GameType, maxPlayers: number, entryFee: number) {
+    public createOrJoinRoom(user: User, gameId: string, gameName: GameType, maxPlayers: number, entryFee: number, winAmount: number) {
         //check if user exists in room
         //if yes, join the room with new socket id
         //if no, create a new room
@@ -164,7 +164,7 @@ class RoomManager implements IRoomManager  {
             if(isJoined) return
         }
         //else create new room if failed to join or pending room doesnt exists
-        this.createRoom(user, gameId, gameName, maxPlayers, entryFee);
+        this.createRoom(user, gameId, gameName, maxPlayers, entryFee, winAmount);
     }
 
 

@@ -21,6 +21,7 @@ export const start_memory_game = "START_MEMORY_GAME"
 export const open_memory_card = "OPEN_MEMORY_CARD"
 export const match_memory_card = "MATCH_MEMORY_CARD"
 export const unmatch_memory_card = "UNMATCH_MEMORY_CARD"
+export const end_memory_game = "END_MEMORY_GAME"
 
 
 //ludo game

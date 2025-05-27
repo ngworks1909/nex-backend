@@ -10,17 +10,29 @@ export class Room {
     private _maxPlayers: number;
     private _gameStatus: GameStatus = "PENDING";
     private _entryFee: number;
-    constructor(roomId: string, player: User, gameType: GameType, maxPlayers: number, entryFee: number) {
+    private _gameId: string;
+    private _winAmount: number
+    constructor(roomId: string, gameId: string, player: User, gameType: GameType, maxPlayers: number, entryFee: number, winAmount: number) {
         this._roomId = roomId;
+        this._gameId = gameId
         this._players = [player];
         this._gameType = gameType;
         this._maxPlayers = maxPlayers;
-        this._entryFee = entryFee
+        this._entryFee = entryFee;
+        this._winAmount = winAmount
         //emit event to the user that new game is created
     }
 
     public get roomId(){
         return this._roomId
+    }
+
+    public get gameId(){
+        return this._gameId
+    }
+
+    public get winAmount(){
+        return this._winAmount
     }
 
     public get players(){

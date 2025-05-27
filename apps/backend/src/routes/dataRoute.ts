@@ -53,20 +53,21 @@ router.get('/activity', verifySession, async(req: UserRequest, res) => {
                     orderBy: {
                         createdAt: 'desc'
                     },
+                    take: 10,
                     select: {
                         game: {
                             select: {
                                 entryFee: true,
                                 maxPlayers: true,
-                                gameName: true,
-                                winAmount: true
+                                gameName: true
                             }
                         },
+                        winAmount: true,
                         createdAt: true,
                         winnerId: true
                     }
                 }
-            }
+            },
         });
         if(!data){
             return res.status(400).json({success: false, message: "User not found"})

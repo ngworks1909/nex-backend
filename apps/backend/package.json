@@ -4,11 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "npm run db:generate && npx tsc",
+    "build": "cd ../../packages/db && npx prisma generate && cd ../../apps/backend && npx tsc",
     "start": "node dist/index.js",
-    "dev": "npx tsc -b &&nodemon src/index.ts",
-    "postinstall": "npm run db:generate",
-    "db:generate": "cd ../../packages/db && npx prisma generate"
+    "dev": "npx tsc -b && nodemon src/index.ts",
+    "postinstall": "cd ../../packages/db && npx prisma generate && cd ../../apps/backend && npx tsc"
   },
   "keywords": [],
   "author": "",
@@ -22,7 +21,8 @@
     "express": "^4.21.1",
     "jsonwebtoken": "^9.0.2",
     "razorpay": "^2.9.6",
-    "zod": "^3.24.1"
+    "zod": "^3.24.1",
+    "ts-node": "10.0.0"
   },
   "devDependencies": {
     "@types/jsonwebtoken": "^9.0.7"

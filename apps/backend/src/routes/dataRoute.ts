@@ -43,7 +43,10 @@ router.get("/fetchdata", verifySession, async(req: UserRequest, res) => {
 
 router.get('/activity', verifySession, async(req: UserRequest, res) => {
     try {
-        const userId = req.userId!
+        const userId = req.userId;
+        if(!userId){
+            return res.status(400).json({success: false, message: "Invalid auth"})
+        }
         const data = await prisma.user.findUnique({
             where: {
                 userId

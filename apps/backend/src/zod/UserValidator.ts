@@ -16,7 +16,6 @@ export const signupValidator = z.object({
     username: z.string().min(3, {
         message: "Username must be 3 characters long."
     }),
-    referralCode: z.string().length(6, {message: "Refferal code must be 6 characters long."}).optional()
 })
 
 export const updateValidator = z.object({
@@ -30,4 +29,9 @@ export const otpValidator = z.object({
     otp: z.string().min(6, {
         message: "OTP must be 6 characters long."
     })
+})
+
+
+export const referralValidator = z.object({
+    referralCode: z.string().length(6, {message: "Invalid referral code."})
 })

@@ -18,16 +18,17 @@ model User {
   username String
   mobile   String  @unique
   otp      String
+  otpExpiry DateTime
   createdAt DateTime @default(now())
   wallet   Wallet?
   rooms    Room[] @relation("Matches")
   winnings Room[] @relation("Winnings")
   referralCode String? @unique
-  referredBy String?
   verified Boolean @default(false)
   payments Payment[]
-
-  @@index([userId, mobile])
+  referredBy Referral? @relation("Referee")
+  referrals Referral[] @relation("Referrer")
+  @@index([mobile])
 }
 
 model Wallet {
@@ -35,8 +36,6 @@ model Wallet {
   userId   String @unique
   user     User   @relation(fields: [userId], references: [userId])
   balance  Float  @default(0)
-
-  @@index([walletId, userId])
 }
 
 model Banner{
@@ -54,7 +53,7 @@ model Game{
   maxPlayers Int
   isActive Boolean @default(true)
   rooms Room[]
-  @@index([gameId, gameName])
+  @@index([gameName])
 }
 
 model Payment {
@@ -65,8 +64,7 @@ model Payment {
   paymentStatus PaymentStatus @default(Pending)
   paymentType PaymentType
   createdAt DateTime @default(now())
-
-  @@index([paymentId, userId])
+  @@index([userId])
 }
 
 enum PaymentType {
@@ -89,7 +87,6 @@ model Room {
   winnerId String?
   winAmount Float @default(0)
   winner User?  @relation("Winnings", fields: [winnerId], references: [userId])
-  @@index([roomId])
 }
 
 enum GameName {
@@ -97,6 +94,20 @@ enum GameName {
   MINES
   MEMORY
 }
+
+model Referral {
+  referralId     String   @id @default(cuid())
+  referredBy  String
+  referredTo  String   @unique
+  referredAt  DateTime @default(now())
+  referrer    User     @relation("Referrer", fields: [referredBy], references: [userId])
+  referee     User     @relation("Referee",  fields: [referredTo], references: [userId])
+  bonus Float @default(100)
+  @@index([referredBy, referredTo])
+  @@unique([referredBy, referredTo])
+}
+
+
 
 
 

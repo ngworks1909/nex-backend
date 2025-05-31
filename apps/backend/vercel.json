@@ -3,6 +3,11 @@
   "buildCommand": "npx tsc -b",
   "installCommand": "npm install && cd ../../ && npm i && cd packages/db && npx prisma generate && cd ../../apps/backend",
   "outputDirectory": "dist",
+  "functions": {
+    "dist/index.js": {
+      "runtime": "nodejs22.x"
+    }
+  },
   "routes": [
     {
       "src": "/(.*)",

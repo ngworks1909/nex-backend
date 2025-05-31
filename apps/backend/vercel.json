@@ -1,16 +1,18 @@
 {
   "version": 2,
-  "buildCommand": "npx tsc -b && mkdir -p api && cp -r dist api",
+  "buildCommand": "npx tsc -b && rm -rf api && mkdir -p api && cp -r dist/* api/",
   "installCommand": "npm install && cd ../../ && npm i && cd packages/db && npx prisma generate && cd ../../apps/backend",
-  "functions": {
-    "api/index.js": {
-      "runtime": "@vercel/node@3.0.0"
+  "outputDirecotry": "dist",
+  "builds": [
+    {
+      "src": "dist/index.js",
+      "use": "@vercel/node"
     }
-  },
+  ],
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "api/index.js"
+      "dest": "dist/index.js"
     }
   ]
 }

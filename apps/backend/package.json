@@ -4,10 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "cd ../../packages/db && npx prisma generate && cd ../../apps/backend && npx tsc",
+    "build": "ls && cd ../../packages/db && npx prisma generate && cd ../../apps/backend && npx tsc",
     "start": "node dist/index.js",
     "dev": "npx tsc -b && nodemon src/index.ts",
-    "postinstall": "cd ../../packages/db && npx prisma generate && cd ../../apps/backend && npx tsc"
+    "postinstall": "ls && cd ../../packages/db && npx prisma generate && cd ../../apps/backend && npx tsc"
   },
   "keywords": [],
   "author": "",

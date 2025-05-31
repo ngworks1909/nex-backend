@@ -1,11 +1,9 @@
 {
   "version": 2,
-  "buildCommand": "npx tsc -b && rm -rf api && mkdir -p api && cp -r dist/* api/",
-  "installCommand": "npm install && cd ../../ && npm i && cd packages/db && npx prisma generate && cd ../../apps/backend",
   "outputDirectory": "dist",
   "builds": [
     {
-      "src": "dist/index.js",
+      "src": "package.json",
       "use": "@vercel/node"
     }
   ],

@@ -1,12 +1,16 @@
 {
   "version": 2,
-  "buildCommand": "npx tsc -b",
+  "buildCommand": "npx tsc -b && mkdir -p api && cp -r dist api",
   "installCommand": "npm install && cd ../../ && npm i && cd packages/db && npx prisma generate && cd ../../apps/backend",
-  "outputDirectory": "dist",
+  "functions": {
+    "api/index.js": {
+      "runtime": "@vercel/node@3.0.0"
+    }
+  },
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "dist/index.js"
+      "dest": "api/index.js"
     }
   ]
 }

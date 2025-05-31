@@ -3,15 +3,10 @@
   "buildCommand": "npx tsc -b",
   "installCommand": "npm install && cd ../../ && npm i && cd packages/db && npx prisma generate && cd ../../apps/backend",
   "outputDirectory": "dist",
-  "functions": {
-    "dist/index.js": {
-      "runtime": "@vercel/node@3.0.0"
-    }
-  },
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "/"
+      "dest": "dist/index.js"
     }
   ]
 }
